@@ -59,7 +59,7 @@ class FancyShowCaseView @JvmOverloads constructor(context: Context, attrs: Attri
     private var spannedTitle: Spanned? = null
     private var id: String? = null
     private var focusCircleRadiusFactor: Double = 1.0
-    private var focusedView: View? = null
+    private var focusedViews: List<View> = emptyList()
     private var clickableView: View? = null
     private var mBackgroundColor: Int = 0
     private var mFocusBorderColor: Int = 0
@@ -103,7 +103,7 @@ class FancyShowCaseView @JvmOverloads constructor(context: Context, attrs: Attri
      * Constructor for FancyShowCaseView
      *
      * @param _activity                 Activity to show FancyShowCaseView in
-     * @param _focusView                view to focus
+     * @param _focusViews               views to focus
      * @param _clickableView            view to be clickable
      * @param _id                       unique identifier for FancyShowCaseView
      * @param _title                    title text
@@ -134,7 +134,7 @@ class FancyShowCaseView @JvmOverloads constructor(context: Context, attrs: Attri
      * @param _animationEnabled         flag to enable/disable animation
      */
     private constructor(_activity: Activity,
-                        _focusView: View?,
+                        _focusViews: List<View>,
                         _clickableView: View?,
                         _id: String?,
                         _title: String?,
@@ -172,7 +172,7 @@ class FancyShowCaseView @JvmOverloads constructor(context: Context, attrs: Attri
         requireNotNull(_activity)
         id = _id
         activity = _activity
-        focusedView = _focusView
+        focusedViews = _focusViews
         clickableView = _clickableView
         title = _title
         spannedTitle = _spannedTitle
@@ -238,8 +238,8 @@ class FancyShowCaseView @JvmOverloads constructor(context: Context, attrs: Attri
             return
         }
         // if view is not laid out get width/height values in onGlobalLayout
-        if (focusedView != null && focusedView?.width == 0 && focusedView?.height == 0) {
-            focusedView?.viewTreeObserver?.addOnGlobalLayoutListener(this)
+        if (focusedViews.isNotEmpty() && focusedViews.all { it.width == 0 && it.height == 0 }) {
+            focusedViews.firstOrNull()?.viewTreeObserver?.addOnGlobalLayoutListener(this)
         } else {
             focus()
         }
@@ -248,13 +248,13 @@ class FancyShowCaseView @JvmOverloads constructor(context: Context, attrs: Attri
     private fun focus() {
         focusCalculator = Calculator(activity,
                 mFocusShape,
-                focusedView,
+                focusedViews,
                 focusCircleRadiusFactor,
                 fitSystemWindows)
 
         clickableCalculator = Calculator(activity,
                 mFocusShape,
-                clickableView,
+                clickableView?.let { arrayListOf(it) } ?: emptyList(),
                 focusCircleRadiusFactor,
                 fitSystemWindows)
 
@@ -503,8 +503,8 @@ class FancyShowCaseView @JvmOverloads constructor(context: Context, attrs: Attri
 
                         val revealRadius = Math.hypot(width.toDouble(), height.toDouble()).toInt()
                         var startRadius = 0
-                        if (focusedView != null) {
-                            startRadius = focusedView!!.width / 2
+                        if (focusedViews.isNotEmpty()) {
+                            startRadius = focusedViews.first().width / 2
                         } else if (mFocusCircleRadius > 0 || mFocusRectangleWidth > 0 || mFocusRectangleHeight > 0) {
                             mCenterX = mFocusPositionX
                             mCenterY = mFocusPositionY
@@ -580,9 +580,9 @@ class FancyShowCaseView @JvmOverloads constructor(context: Context, attrs: Attri
 
     override fun onGlobalLayout() {
         if (Build.VERSION.SDK_INT < 16) {
-            focusedView?.viewTreeObserver?.removeGlobalOnLayoutListener(this)
+            focusedViews.firstOrNull()?.viewTreeObserver?.removeGlobalOnLayoutListener(this)
         } else {
-            focusedView?.viewTreeObserver?.removeOnGlobalLayoutListener(this)
+            focusedViews.firstOrNull()?.viewTreeObserver?.removeOnGlobalLayoutListener(this)
         }
         focus()
     }
@@ -596,7 +596,7 @@ class FancyShowCaseView @JvmOverloads constructor(context: Context, attrs: Attri
      * Builder class for [FancyShowCaseView]
      */
     class Builder(private val activity: Activity) {
-        private var focusedView: View? = null
+        private var focusedViews: MutableList<View> = arrayListOf()
         private var clickableView: View? = null
         private var mId: String? = null
         private var mTitle: String? = null
@@ -726,7 +726,17 @@ class FancyShowCaseView @JvmOverloads constructor(context: Context, attrs: Attri
          * @return Builder
          */
         fun focusOn(view: View): Builder {
-            focusedView = view
+            focusedViews = arrayListOf(view)
+            return this
+        }
+
+        fun addFocusOn(view: View): Builder {
+            focusedViews.add(view)
+            return this
+        }
+
+        fun removeFocusOn(view: View): Builder {
+            focusedViews.remove(view)
             return this
         }
 
@@ -906,7 +916,7 @@ class FancyShowCaseView @JvmOverloads constructor(context: Context, attrs: Attri
          * @return [FancyShowCaseView] with given parameters
          */
         fun build(): FancyShowCaseView {
-            return FancyShowCaseView(activity, focusedView, clickableView, mId, mTitle, mSpannedTitle, mTitleGravity, mTitleStyle, mTitleSize, mTitleSizeUnit,
+            return FancyShowCaseView(activity, focusedViews, clickableView, mId, mTitle, mSpannedTitle, mTitleGravity, mTitleStyle, mTitleSize, mTitleSizeUnit,
                     focusCircleRadiusFactor, mBackgroundColor, mFocusBorderColor, mFocusBorderSize, mCustomViewRes, viewInflateListener,
                     mEnterAnimation, mExitAnimation, mAnimationListener, mCloseOnTouch, mEnableTouchOnFocusedView, fitSystemWindows, mFocusShape, mDismissListener, mRoundRectRadius,
                     mFocusPositionX, mFocusPositionY, mFocusCircleRadius, mFocusRectangleWidth, mFocusRectangleHeight, focusAnimationEnabled,

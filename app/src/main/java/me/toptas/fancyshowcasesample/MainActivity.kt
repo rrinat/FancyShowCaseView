@@ -25,6 +25,7 @@ import android.util.TypedValue
 import android.view.*
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.Toast
@@ -284,6 +285,28 @@ class MainActivity : BaseActivity() {
                     .title("Focus with delay")
                     .focusOn(it)
                     .delay(1000)
+                    .build()
+                    .show()
+        }
+
+        group_button_1.setOnClickListener {
+            FancyShowCaseView.Builder(this)
+                    .title((it as Button).text.toString())
+                    .addFocusOn(group_button_1)
+                    .addFocusOn(group_button_2)
+                    .build()
+                    .show()
+        }
+
+        group_button_3.setOnClickListener {
+            FancyShowCaseView.Builder(this)
+                    .title((it as Button).text.toString())
+                    .addFocusOn(group_button_3)
+                    .addFocusOn(group_button_4)
+                    .addFocusOn(group_button_5)
+                    .focusShape(FocusShape.ROUNDED_RECTANGLE)
+                    .roundRectRadius(90)
+                    .enableTouchOnFocusedView(true)
                     .build()
                     .show()
         }

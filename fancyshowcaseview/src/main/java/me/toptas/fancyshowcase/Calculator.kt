@@ -18,6 +18,7 @@ package me.toptas.fancyshowcase
 
 import android.app.Activity
 import android.content.Context
+import android.graphics.Point
 import android.os.Build
 import android.util.DisplayMetrics
 import android.view.View
@@ -30,7 +31,7 @@ import android.widget.RelativeLayout
 
 class Calculator(activity: Activity,
                  focusShape: FocusShape,
-                 view: View?,
+                 views: List<View>,
                  radiusFactor: Double,
                  fitSystemWindows: Boolean) {
 
@@ -85,19 +86,20 @@ class Calculator(activity: Activity,
         bitmapHeight = deviceHeight - if (fitSystemWindows) 0 else getStatusBarHeight(activity)
         val shouldAdjustYPosition = (fitSystemWindows && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
                 || (isFullScreen() && !fitSystemWindows))
-        if (view != null) {
+        if (views.isNotEmpty()) {
             val adjustHeight = if (shouldAdjustYPosition)
                 0
             else
                 getStatusBarHeight(activity)
-            val viewPoint = IntArray(2)
-            view.getLocationInWindow(viewPoint)
-            focusWidth = view.width
-            focusHeight = view.height
+            val viewPoint = getPoint(views)
+            val size = getSize(views)
+
+            focusWidth = size?.width ?: 0
+            focusHeight = size?.height ?: 0
             this.focusShape = focusShape
-            circleCenterX = viewPoint[0] + focusWidth / 2
-            circleCenterY = viewPoint[1] + focusHeight / 2 - adjustHeight
-            viewRadius = ((Math.hypot(view.width.toDouble(), view.height.toDouble()) / 2).toInt() * radiusFactor).toInt()
+            circleCenterX = (viewPoint?.x ?: 0) + focusWidth / 2
+            circleCenterY = (viewPoint?.y ?: 0) + focusHeight / 2 - adjustHeight
+            viewRadius = ((Math.hypot(focusWidth.toDouble(), focusHeight.toDouble()) / 2).toInt() * radiusFactor).toInt()
             mHasFocus = true
         } else {
             mHasFocus = false
@@ -223,6 +225,64 @@ class Calculator(activity: Activity,
     private fun isFullScreen(): Boolean =
             (windowFlags and WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0
 
+    private fun getPoint(views: List<View>): Point? {
+        val viewPoint = IntArray(2)
+
+        var minX: Int? = null
+        var minY: Int? = null
+
+        views.forEach { view ->
+            view.getLocationInWindow(viewPoint)
+
+            if (minX == null || minX!! > viewPoint[0]) {
+                minX = viewPoint[0]
+            }
+
+            if (minY == null || minY!! > viewPoint[1]) {
+                minY = viewPoint[1]
+            }
+        }
+
+        return if (minX != null && minY != null) Point(minX!!, minY!!) else null
+    }
+
+    private fun getSize(views: List<View>): Size? {
+        val viewPoint = IntArray(2)
+
+        var minLeft: Int? = null
+        var maxRight: Int? = null
+
+        var minTop: Int? = null
+        var maxBottom: Int? = null
+
+        views.forEach { view ->
+            view.getLocationInWindow(viewPoint)
+
+            if (minLeft == null || minLeft!! > viewPoint[0]) {
+                minLeft = viewPoint[0]
+            }
+
+            val right = viewPoint[0] + view.width
+            if (maxRight == null || maxRight!! < right) {
+                maxRight = right
+            }
+
+            val top = viewPoint[1]
+            if (minTop  == null || minTop!! > top) {
+                minTop = top
+            }
+
+            val bottom = viewPoint[1] + view.height
+            if (maxBottom == null || maxBottom!! < bottom) {
+                maxBottom = bottom
+            }
+        }
+
+        return if (minLeft == null || maxRight == null || minTop == null || maxBottom == null) null
+         else Size(maxRight!! - minLeft!!, maxBottom!! - minTop!!)
+    }
+
+    private data class Size(val width: Int, val height: Int)
 
     companion object {
         fun getStatusBarHeight(context: Context): Int {
