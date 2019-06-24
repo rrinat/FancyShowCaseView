@@ -25,10 +25,7 @@ import android.util.TypedValue
 import android.view.*
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.RelativeLayout
-import android.widget.Toast
+import android.widget.*
 import kotlinx.android.synthetic.main.activity_main.*
 import me.toptas.fancyshowcase.FancyShowCaseView
 import me.toptas.fancyshowcase.FocusShape
@@ -291,7 +288,7 @@ class MainActivity : BaseActivity() {
 
         group_button_1.setOnClickListener {
             FancyShowCaseView.Builder(this)
-                    .title((it as Button).text.toString())
+                    .title((it as TextView).text.toString())
                     .addFocusOn(group_button_1)
                     .addFocusOn(group_button_2)
                     .build()
@@ -300,7 +297,7 @@ class MainActivity : BaseActivity() {
 
         group_button_3.setOnClickListener {
             FancyShowCaseView.Builder(this)
-                    .title((it as Button).text.toString())
+                    .title((it as TextView).text.toString())
                     .addFocusOn(group_button_3)
                     .addFocusOn(group_button_4)
                     .addFocusOn(group_button_5)
